@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "installCommand": "cd Client && npm install",
+  "buildCommand": "cd Client && npm run build",
+  "outputDirectory": "Client/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
