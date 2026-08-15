@@ -4,6 +4,9 @@ import { supabase } from "../lib/supabase";
 function Register() {
   const [events, setEvents] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(
+    "Your registration has been submitted."
+  );
 
   useEffect(() => {
     fetchEvents();
@@ -44,11 +47,9 @@ function Register() {
   }
 
   async function handleSubmit(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const { error } = await supabase
-    .from("registrations")
-    .insert([
+    const { error } = await supabase.from("registrations").insert([
       {
         full_name: formData.fullName,
         email: formData.email,
@@ -61,59 +62,66 @@ function Register() {
       },
     ]);
 
-  if (error) {
-  console.error(
-    "Registration error:",
-    error.message,
-    error.details,
-    error.hint
-  );
+    if (error) {
+      console.error(
+        "Registration error:",
+        error.message,
+        error.details,
+        error.hint
+      );
 
-  alert("Registration failed. Please try again.");
-  return;
-}
+      alert("Registration failed. Please try again.");
+      return;
+    }
 
-// Send confirmation email
-const { data: emailData, error: emailError } =
-  await supabase.functions.invoke("send-registration-email", {
-    body: {
-      name: formData.fullName,
-      email: formData.email,
-      event: formData.event,
-      teamSize: Number(formData.teamSize),
-      college: formData.college,
-    },
-  });
+    let emailNotice = "Your registration has been submitted.";
 
-if (emailError) {
-  console.error("Email error:", emailError);
+    if (import.meta.env.VITE_ENABLE_REGISTRATION_EMAIL === "true") {
+      try {
+        const { data: emailData, error: emailError } =
+          await supabase.functions.invoke("send-registration-email", {
+            body: {
+              name: formData.fullName,
+              email: formData.email,
+              event: formData.event,
+              teamSize: Number(formData.teamSize),
+              college: formData.college,
+            },
+          });
 
-  alert(
-    "Registration was successful, but the confirmation email could not be sent."
-  );
+        if (emailError) {
+          throw emailError;
+        }
 
-  return;
-}
+        console.log("Confirmation email:", emailData);
+      } catch (emailError) {
+        console.warn(
+          "Email function is unavailable or failed, continuing without it:",
+          emailError
+        );
+        emailNotice =
+          "Your registration has been submitted. Confirmation email could not be sent right now.";
+      }
+    }
 
-console.log("Confirmation email:", emailData);
+    setSuccessMessage(emailNotice);
+    setShowSuccess(true);
 
-  setShowSuccess(true);
+    setFormData({
+      fullName: "",
+      email: "",
+      phone: "",
+      college: "",
+      year: "",
+      department: "",
+      event: "",
+      teamSize: "1",
+    });
 
-  setFormData({
-    fullName: "",
-    email: "",
-    phone: "",
-    college: "",
-    year: "",
-    department: "",
-    event: "",
-    teamSize: "1",
-  });
-
-  setTimeout(() => {
-    setShowSuccess(false);
-  }, 4000);
-}
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 4000);
+  }
 
   return (
     <>
@@ -123,7 +131,7 @@ console.log("Confirmation email:", emailData);
 
           <div>
             <strong>Registration Successful!</strong>
-            <p>Your registration has been submitted.</p>
+            <p>{successMessage}</p>
           </div>
 
           <button
