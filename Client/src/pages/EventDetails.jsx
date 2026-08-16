@@ -1,4 +1,4 @@
-```jsx
+
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -138,4 +138,3 @@ function EventDetails() {
 }
 
 export default EventDetails;
-```
