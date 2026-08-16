@@ -29,14 +29,15 @@
 
 .kprit-logo {
   width: 190px;
-  height: auto;
+  height: 65px;
+  object-fit: contain;
   display: block;
 }
 
 
 .nec-logo {
-  width: 145px;
-  height: 62px;
+  width: 190px;
+  height: 65px;
 
   object-fit: contain;
   display: block;
@@ -44,8 +45,8 @@
 
 
 .ecell-logo {
-  width: 70px;
-  height: 62px;
+  width: 190px;
+  height: 65px;
 
   object-fit: contain;
   display: block;
@@ -145,15 +146,16 @@
 
   .kprit-logo {
     width: 155px;
+    height: 55px;
   }
 
   .nec-logo {
-    width: 120px;
+    width: 155px;
     height: 55px;
   }
 
   .ecell-logo {
-    width: 62px;
+    width: 155px;
     height: 55px;
   }
 
@@ -185,15 +187,17 @@
 
   .kprit-logo {
     width: 135px;
+    height: 48px;
+
   }
 
   .nec-logo {
-    width: 100px;
+    width: 135px;
     height: 48px;
   }
 
   .ecell-logo {
-    width: 52px;
+    width: 135px;
     height: 48px;
   }
 
