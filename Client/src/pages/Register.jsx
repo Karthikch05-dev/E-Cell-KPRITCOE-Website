@@ -49,18 +49,21 @@ function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    const { error } = await supabase.from("registrations").insert([
-      {
-        full_name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        college: formData.college,
-        year: formData.year,
-        department: formData.department,
-        event: formData.event,
-        team_size: Number(formData.teamSize),
-      },
-    ]);
+    // Step 1: Save registration
+    const { error } = await supabase
+      .from("registrations")
+      .insert([
+        {
+          full_name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          college: formData.college,
+          year: formData.year,
+          department: formData.department,
+          event: formData.event,
+          team_size: Number(formData.teamSize),
+        },
+      ]);
 
     if (error) {
       console.error(
@@ -74,12 +77,15 @@ function Register() {
       return;
     }
 
-    let emailNotice = "Your registration has been submitted.";
+    // Step 2: Send confirmation email
+    let emailNotice =
+      "Your registration has been submitted.";
 
-    if (import.meta.env.VITE_ENABLE_REGISTRATION_EMAIL === "true") {
-      try {
-        const { data: emailData, error: emailError } =
-          await supabase.functions.invoke("send-registration-email", {
+    try {
+      const { data: emailData, error: emailError } =
+        await supabase.functions.invoke(
+          "send-registration-email",
+          {
             body: {
               name: formData.fullName,
               email: formData.email,
@@ -87,26 +93,41 @@ function Register() {
               teamSize: Number(formData.teamSize),
               college: formData.college,
             },
-          });
+          }
+        );
 
-        if (emailError) {
-          throw emailError;
-        }
-
-        console.log("Confirmation email:", emailData);
-      } catch (emailError) {
-        console.warn(
-          "Email function is unavailable or failed, continuing without it:",
+      if (emailError) {
+        console.error(
+          "Email function error:",
           emailError
         );
+
         emailNotice =
-          "Your registration has been submitted. Confirmation email could not be sent right now.";
+          "Your registration has been submitted, but the confirmation email could not be sent.";
+      } else {
+        console.log(
+          "Confirmation email sent:",
+          emailData
+        );
+
+        emailNotice =
+          "Your registration has been submitted. A confirmation email has been sent.";
       }
+    } catch (emailError) {
+      console.error(
+        "Email request failed:",
+        emailError
+      );
+
+      emailNotice =
+        "Your registration has been submitted, but the confirmation email could not be sent.";
     }
 
+    // Step 3: Show success notification
     setSuccessMessage(emailNotice);
     setShowSuccess(true);
 
+    // Step 4: Clear form
     setFormData({
       fullName: "",
       email: "",
@@ -118,6 +139,7 @@ function Register() {
       teamSize: "1",
     });
 
+    // Step 5: Hide notification
     setTimeout(() => {
       setShowSuccess(false);
     }, 4000);
@@ -146,7 +168,9 @@ function Register() {
       <main className="registration-page">
 
         <section className="registration-header">
-          <p className="section-label">EVENT REGISTRATION</p>
+          <p className="section-label">
+            EVENT REGISTRATION
+          </p>
 
           <h1>Join the Experience.</h1>
 
@@ -162,6 +186,8 @@ function Register() {
             className="registration-form"
             onSubmit={handleSubmit}
           >
+
+            {/* Full Name + Email */}
 
             <div className="form-row">
 
@@ -199,6 +225,8 @@ function Register() {
 
             </div>
 
+            {/* Phone + College */}
+
             <div className="form-row">
 
               <div className="form-group">
@@ -234,6 +262,8 @@ function Register() {
               </div>
 
             </div>
+
+            {/* Year + Department */}
 
             <div className="form-row">
 
@@ -289,6 +319,8 @@ function Register() {
 
             </div>
 
+            {/* Event */}
+
             <div className="form-group">
 
               <label htmlFor="event">
@@ -305,30 +337,54 @@ function Register() {
                 <option value="">
                   Select an event
                 </option>
+
                 {events.map((event) => (
-  <option key={event.id} value={event.title}>
-    {event.title}
-  </option>
-))}
+                  <option
+                    key={event.id}
+                    value={event.title}
+                  >
+                    {event.title}
+                  </option>
+                ))}
               </select>
 
             </div>
-            <div className="form-group">
-  <label htmlFor="teamSize">Team Size</label>
 
-  <select
-    id="teamSize"
-    name="teamSize"
-    value={formData.teamSize}
-    onChange={handleChange}
-    required
-  >
-    <option value="1">1 Member</option>
-    <option value="2">2 Members</option>
-    <option value="3">3 Members</option>
-    <option value="4">4 Members</option>
-  </select>
-</div>
+            {/* Team Size */}
+
+            <div className="form-group">
+
+              <label htmlFor="teamSize">
+                Team Size
+              </label>
+
+              <select
+                id="teamSize"
+                name="teamSize"
+                value={formData.teamSize}
+                onChange={handleChange}
+                required
+              >
+                <option value="1">
+                  1 Member
+                </option>
+
+                <option value="2">
+                  2 Members
+                </option>
+
+                <option value="3">
+                  3 Members
+                </option>
+
+                <option value="4">
+                  4 Members
+                </option>
+              </select>
+
+            </div>
+
+            {/* Submit */}
 
             <div className="registration-submit">
 
