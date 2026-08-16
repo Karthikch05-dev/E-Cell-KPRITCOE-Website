@@ -117,9 +117,9 @@ function About() {
         </div>
 
         <div className="about-hero-logo">
-  <img
-    src="/images/KPRIT-ECELL-Logo.jpeg"
-    alt="E-Cell KPRIT-COE Logo"
+<img
+   src="/images/ecell-logo.png"
+   alt="E-Cell KPRIT-COE"
   />
 </div>
 
