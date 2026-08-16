@@ -9,16 +9,22 @@ interface RegistrationBody {
 }
 
 serve(async (req: Request) => {
+  console.log("📨 Function called! Method:", req.method);
+  
   // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*" } });
   }
 
   try {
-    const { name, email, event, teamSize, college }: RegistrationBody = await req.json();
+    const body = await req.json();
+    console.log("📨 Received data:", body);
+    
+    const { name, email, event, teamSize, college }: RegistrationBody = body;
 
     // Validate required fields
     if (!name || !email || !event) {
+      console.log("❌ Missing required fields");
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
@@ -27,6 +33,9 @@ serve(async (req: Request) => {
 
     const apiKey = Deno.env.get("RESEND_API_KEY");
     const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "noreply@ecell-kprit.dev";
+
+    console.log("🔑 API Key configured:", !!apiKey);
+    console.log("📧 From Email:", fromEmail);
 
     // Email template
     const emailHtml = `
@@ -85,6 +94,7 @@ serve(async (req: Request) => {
     // If Resend API key is configured, send via Resend
     if (apiKey) {
       try {
+        console.log("📬 Sending email via Resend to:", email);
         const response = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -102,25 +112,22 @@ serve(async (req: Request) => {
         const result = await response.json();
 
         if (!response.ok) {
-          console.error("Resend API error:", result);
-          // Fall through to success response even if Resend fails
-          // The registration was saved successfully
+          console.error("❌ Resend API error:", result);
         } else {
-          console.log("Email sent via Resend:", result);
+          console.log("✅ Email sent successfully:", result.id);
         }
       } catch (error) {
-        console.error("Resend request failed:", error);
-        // Continue - registration was successful even if email fails
+        console.error("❌ Email error:", error);
       }
     } else {
-      console.warn("RESEND_API_KEY not configured. Email not sent. Configure Resend to enable emails.");
+      console.warn("⚠️ RESEND_API_KEY not configured!");
     }
 
-    // Always return success since registration was saved
+    console.log("✅ Returning success response");
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Registration successful. Confirmation email has been sent or will be sent shortly."
+        message: "Registration successful"
       }),
       { 
         status: 200, 
@@ -131,7 +138,7 @@ serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error("Function error:", error);
+    console.error("❌ Function error:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error", details: String(error) }),
       { 
