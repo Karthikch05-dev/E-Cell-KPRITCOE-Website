@@ -1,8 +1,9 @@
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 function Events() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
@@ -57,7 +58,12 @@ function Events() {
           const date = formatDate(event.event_date);
 
           return (
-            <div className="full-event-card" key={event.id}>
+            <div
+              className="full-event-card"
+              key={event.id}
+              onClick={() => navigate(`/events/${event.id}`)}
+              style={{ cursor: "pointer" }}
+            >
 
               <div className="full-date">
                 <span>{date.month}</span>
@@ -82,6 +88,7 @@ function Events() {
                 <Link
                   to="/register"
                   className="primary-button"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   Register Now →
                 </Link>
