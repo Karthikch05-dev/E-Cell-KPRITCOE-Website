@@ -1,11 +1,16 @@
 import { serve } from "https://deno.land/std@0.195.0/http/server.ts";
 
 interface RegistrationBody {
+  registrationId: string;
   name: string;
   email: string;
+  phone: string;
+  college: string;
+  year: string;
+  department: string;
   event: string;
   teamSize: number;
-  college: string;
+  createdAt: string;
 }
 
 serve(async (req: Request) => {
@@ -13,17 +18,33 @@ serve(async (req: Request) => {
   
   // Handle CORS
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*" } });
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      },
+    });
   }
 
   try {
-    const body = await req.json();
-    console.log("📨 Received data:", body);
+    const body = await req.json() as RegistrationBody;
+    console.log("📨 Received registration data for:", body.email);
     
-    const { name, email, event, teamSize, college }: RegistrationBody = body;
+    const {
+      registrationId,
+      name,
+      email,
+      phone,
+      college,
+      year,
+      department,
+      event,
+      teamSize,
+      createdAt,
+    } = body;
 
     // Validate required fields
-    if (!name || !email || !event) {
+    if (!registrationId || !name || !email || !event) {
       console.log("❌ Missing required fields");
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
@@ -31,122 +52,87 @@ serve(async (req: Request) => {
       );
     }
 
-    const apiKey = Deno.env.get("RESEND_API_KEY");
-    const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "noreply@ecell-kprit.dev";
+    // Get Google Apps Script configuration from Supabase secrets
+    const appScriptUrl = Deno.env.get("APP_SCRIPT_WEB_APP_URL");
+    const appScriptSecret = Deno.env.get("APP_SCRIPT_SHARED_SECRET");
 
-    console.log("🔑 API Key configured:", !!apiKey);
-    console.log("📧 From Email:", fromEmail);
-
-    // Email template
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
-            .header { background: linear-gradient(135deg, #172b57 0%, #f15a24 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { background: white; padding: 30px; border-radius: 0 0 8px 8px; }
-            .details { background: #f0f4f8; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            .details p { margin: 8px 0; }
-            .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Registration Confirmed! 🎉</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${name},</h2>
-              <p>Thank you for registering for our E-Cell KPRIT-COE event! We're excited to have you on board.</p>
-              
-              <div class="details">
-                <p><strong>Registration Details:</strong></p>
-                <p><strong>Event:</strong> ${event}</p>
-                <p><strong>Team Size:</strong> ${teamSize}</p>
-                <p><strong>College/Institution:</strong> ${college}</p>
-                <p><strong>Email:</strong> ${email}</p>
-              </div>
-
-              <p>We'll send you further updates about the event schedule, venue details, and any other important information via this email.</p>
-              
-              <p><strong>What's Next?</strong></p>
-              <ul>
-                <li>Check your email regularly for event updates</li>
-                <li>Make sure to arrive on time on the event day</li>
-                <li>Bring all required documents if applicable</li>
-                <li>Feel free to reach out if you have any questions</li>
-              </ul>
-
-              <p>If you have any questions or need to make changes to your registration, please reply to this email.</p>
-              
-              <p>Best regards,<br><strong>E-Cell KPRIT-COE Team</strong></p>
-            </div>
-            <div class="footer">
-              <p>&copy; 2024 Entrepreneurship Cell - KPRIT College of Engineering. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    // If Resend API key is configured, send via Resend
-    if (apiKey) {
-      try {
-        console.log("📬 Sending email via Resend to:", email);
-        const response = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: fromEmail,
-            to: email,
-            subject: `Welcome to E-Cell KPRIT-COE - Registration Confirmed for ${event}`,
-            html: emailHtml,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          console.error("❌ Resend API error:", result);
-        } else {
-          console.log("✅ Email sent successfully:", result.id);
-        }
-      } catch (error) {
-        console.error("❌ Email error:", error);
-      }
-    } else {
-      console.warn("⚠️ RESEND_API_KEY not configured!");
+    if (!appScriptUrl || !appScriptSecret) {
+      console.error("❌ Google Apps Script configuration missing");
+      return new Response(
+        JSON.stringify({
+          error: "Google Apps Script not configured",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    console.log("✅ Returning success response");
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Registration successful"
+    console.log("🔄 Forwarding registration to Google Apps Script...");
+
+    // Forward registration data to Google Apps Script
+    const appScriptResponse = await fetch(appScriptUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        secret: appScriptSecret,
+        registrationId,
+        name,
+        email,
+        phone,
+        college,
+        year,
+        department,
+        event,
+        teamSize,
+        createdAt,
       }),
-      { 
-        status: 200, 
-        headers: { 
+    });
+
+    const appScriptResult = await appScriptResponse.json();
+    console.log("📊 Google Apps Script response:", appScriptResult);
+
+    if (!appScriptResponse.ok) {
+      console.error("❌ Google Apps Script error:", appScriptResult);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to process registration with Google Apps Script",
+          details: appScriptResult,
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("✅ Registration forwarded successfully");
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Registration stored and confirmation email sent",
+        registrationId,
+        appScriptData: appScriptResult,
+      }),
+      {
+        status: 200,
+        headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
+          "Access-Control-Allow-Origin": "*",
+        },
       }
     );
   } catch (error) {
     console.error("❌ Function error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error", details: String(error) }),
-      { 
-        status: 500, 
-        headers: { 
+      JSON.stringify({
+        error: "Internal server error",
+        details: String(error),
+      }),
+      {
+        status: 500,
+        headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        }
+          "Access-Control-Allow-Origin": "*",
+        },
       }
     );
   }

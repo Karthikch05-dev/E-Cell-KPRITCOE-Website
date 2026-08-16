@@ -3,8 +3,10 @@
 ## Project Overview
 This is a full-stack application built with:
 - **Frontend**: React 19 + Vite + React Router
-- **Backend**: Supabase Functions (Edge Functions)
+- **Backend**: Supabase + Edge Functions (as bridge)
 - **Database**: Supabase PostgreSQL
+- **Email Service**: Google Apps Script + Gmail
+- **Spreadsheet**: Google Sheets
 - **Deployment**: Vercel (with Supabase integration)
 
 ## Pre-Deployment Checklist
@@ -28,11 +30,11 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_X6iRAYyrabRIQYfeP8qn3w_7RbshTJI
 #### Supabase Edge Function Environment Variables
 For the `send-registration-email` function, configure in Supabase dashboard:
 ```
-RESEND_API_KEY=your_resend_api_key_here
-RESEND_FROM_EMAIL=noreply@yourdomain.com
+APP_SCRIPT_WEB_APP_URL=https://script.google.com/macros/d/.../usercontent
+APP_SCRIPT_SHARED_SECRET=your_shared_secret_here
 ```
 
-**Note**: These should be set in Supabase Project Settings → Edge Functions
+**Note**: These should be set in Supabase Project Settings → Functions → Secrets. Do NOT expose these in the React frontend.
 
 ### 3. ✅ Database Setup
 Ensure your Supabase database has the following tables:
@@ -199,10 +201,12 @@ supabase functions deploy
 4. Verify registration table exists
 
 ### Emails Not Sending
-1. Check Supabase Edge Function logs
-2. Verify Resend API key is set correctly
-3. Check email sender address is configured
-4. Verify email validation passed
+1. Check Supabase Edge Function logs for errors
+2. Verify Google Apps Script Web App URL is set correctly in Supabase secrets
+3. Verify shared secret matches in Supabase and Apps Script
+4. Check Google Sheet exists and is accessible
+5. Verify Gmail is enabled for the Google account hosting the Apps Script
+6. Check Apps Script logs for errors: Apps Script Dashboard → Execution log
 
 ### Build Failures
 1. Clear `node_modules` and reinstall: `npm install`
@@ -220,7 +224,8 @@ supabase functions deploy
 - [Supabase Documentation](https://supabase.com/docs)
 - [React Router Documentation](https://reactrouter.com)
 - [Vite Documentation](https://vitejs.dev)
-- [Resend Email Service](https://resend.com)
+- [Google Apps Script Documentation](https://developers.google.com/apps-script)
+- [Google Sheets API](https://developers.google.com/sheets/api)
 
 ## Support
 For issues or questions:

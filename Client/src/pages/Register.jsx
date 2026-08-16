@@ -73,7 +73,7 @@ function Register() {
       // 1. SAVE REGISTRATION TO SUPABASE
       // ==========================================
 
-      const { error: registrationError } = await supabase
+      const { data: insertedData, error: registrationError } = await supabase
         .from("registrations")
         .insert([
           {
@@ -86,7 +86,8 @@ function Register() {
             event: formData.event,
             team_size: Number(formData.teamSize),
           },
-        ]);
+        ])
+        .select();
 
       if (registrationError) {
         console.error(
@@ -101,10 +102,19 @@ function Register() {
         return;
       }
 
-      console.log("Registration saved successfully.");
+      const registration = insertedData?.[0];
+      if (!registration || !registration.id) {
+        console.error("No registration ID returned");
+        alert(
+          "Registration failed. Please try again."
+        );
+        return;
+      }
+
+      console.log("Registration saved successfully with ID:", registration.id);
 
       // ==========================================
-      // 2. SEND CONFIRMATION EMAIL
+      // 2. FORWARD TO GOOGLE APPS SCRIPT VIA EDGE FUNCTION
       // ==========================================
 
       let emailSent = false;
@@ -119,11 +129,16 @@ function Register() {
             "send-registration-email",
             {
               body: {
+                registrationId: registration.id,
                 name: formData.fullName,
                 email: formData.email,
+                phone: formData.phone,
+                college: formData.college,
+                year: formData.year,
+                department: formData.department,
                 event: formData.event,
                 teamSize: Number(formData.teamSize),
-                college: formData.college,
+                createdAt: registration.created_at,
               },
             }
           );
@@ -142,7 +157,7 @@ function Register() {
           throw emailError;
         }
 
-        emailSent = true;
+        emailSent = emailData?.success === true;
       } catch (emailError) {
         console.error(
           "Confirmation email failed:",
