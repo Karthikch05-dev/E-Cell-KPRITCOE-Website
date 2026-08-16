@@ -109,42 +109,43 @@ function Register() {
 
     setIsLoading(true);
 
-    // Step 1: Save registration
-    const { error } = await supabase
-      .from("registrations")
-      .insert([
-        {
-          full_name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          college: formData.college,
-          year: formData.year,
-          department: formData.department,
-          event: formData.event,
-          team_size: Number(formData.teamSize),
-        },
-      ]);
-
-    if (error) {
-      console.error(
-        "Registration error:",
-        error.message,
-        error.details,
-        error.hint
-      );
-
-      setError("Registration failed. Please try again.");
-      setIsLoading(false);
-      return;
-    }
-
-    // Step 2: Send confirmation email
-    let emailNotice =
-      "Your registration has been submitted.";
-
     try {
-      const { data: emailData, error: emailError } =
-        await supabase.functions.invoke(
+      // Step 1: Save registration
+      const { error } = await supabase
+        .from("registrations")
+        .insert([
+          {
+            full_name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            college: formData.college,
+            year: formData.year,
+            department: formData.department,
+            event: formData.event,
+            team_size: Number(formData.teamSize),
+          },
+        ]);
+
+      if (error) {
+        console.error(
+          "Registration error:",
+          error.message,
+          error.details,
+          error.hint
+        );
+
+        setError("Registration failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Step 2: Send confirmation email with timeout
+      let emailNotice =
+        "Your registration has been submitted.";
+
+      try {
+        // Create a timeout promise
+        const emailPromise = supabase.functions.invoke(
           "send-registration-email",
           {
             body: {
@@ -157,54 +158,68 @@ function Register() {
           }
         );
 
-      if (emailError) {
+        // Set 10 second timeout
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Email sending timeout")),
+            10000
+          )
+        );
+
+        const { data: emailData, error: emailError } =
+          await Promise.race([emailPromise, timeoutPromise]);
+
+        if (emailError) {
+          console.error(
+            "Email function error:",
+            emailError
+          );
+
+          emailNotice =
+            "Your registration has been submitted, but the confirmation email could not be sent.";
+        } else {
+          console.log(
+            "Confirmation email sent:",
+            emailData
+          );
+
+          emailNotice =
+            "Your registration has been submitted. A confirmation email has been sent.";
+        }
+      } catch (emailError) {
         console.error(
-          "Email function error:",
-          emailError
+          "Email request failed:",
+          emailError.message || emailError
         );
 
         emailNotice =
           "Your registration has been submitted, but the confirmation email could not be sent.";
-      } else {
-        console.log(
-          "Confirmation email sent:",
-          emailData
-        );
-
-        emailNotice =
-          "Your registration has been submitted. A confirmation email has been sent.";
       }
-    } catch (emailError) {
-      console.error(
-        "Email request failed:",
-        emailError
-      );
 
-      emailNotice =
-        "Your registration has been submitted, but the confirmation email could not be sent.";
+      // Step 3: Show success notification
+      setSuccessMessage(emailNotice);
+      setShowSuccess(true);
+
+      // Step 4: Clear form
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        college: "",
+        year: "",
+        department: "",
+        event: "",
+        teamSize: "1",
+      });
+
+      // Step 5: Hide notification
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 4000);
+    } finally {
+      // Always clear loading state
+      setIsLoading(false);
     }
-
-    // Step 3: Show success notification
-    setSuccessMessage(emailNotice);
-    setShowSuccess(true);
-    setIsLoading(false);
-
-    // Step 4: Clear form
-    setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      college: "",
-      year: "",
-      department: "",
-      event: "",
-      teamSize: "1",
-    });
-
-    // Step 5: Hide notification
-    setTimeout(() => {
-      setShowSuccess(false);
-    }, 4000);
   }
 
   return (
