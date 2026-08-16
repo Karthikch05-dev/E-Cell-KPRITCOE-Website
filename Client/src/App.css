@@ -1467,6 +1467,16 @@ a {
   transform: translateY(-2px);
 }
 
+.registration-submit button:disabled {
+  background: #9eabc3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.registration-submit button:disabled:hover {
+  background: #9eabc3;
+}
+
 
 /* Mobile */
 
@@ -1587,6 +1597,94 @@ a {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* =================================
+   ERROR NOTIFICATION
+================================= */
+
+.error-notification {
+  position: fixed;
+  top: 100px;
+  right: 30px;
+
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  min-width: 340px;
+
+  padding: 16px 18px;
+
+  background: #ffffff;
+
+  border-left: 5px solid #e63946;
+  border-radius: 9px;
+
+  box-shadow: 0 15px 40px rgba(23, 43, 87, 0.15);
+
+  animation: notificationSlideIn 0.35s ease forwards;
+}
+
+.error-icon {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e63946;
+  color: #ffffff;
+
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.error-notification strong {
+  display: block;
+  color: #172b57;
+  font-size: 14px;
+}
+
+.error-notification p {
+  margin: 4px 0 0;
+  color: #687386;
+  font-size: 12px;
+}
+
+.error-notification button {
+  margin-left: auto;
+
+  border: none;
+  background: transparent;
+
+  color: #8a94a6;
+
+  cursor: pointer;
+
+  font-size: 22px;
+  line-height: 1;
+}
+
+.error-notification button:hover {
+  color: #172b57;
+}
+
+@media (max-width: 600px) {
+  .error-notification {
+    top: 90px;
+    left: 20px;
+    right: 20px;
+
+    min-width: 0;
   }
 }
 

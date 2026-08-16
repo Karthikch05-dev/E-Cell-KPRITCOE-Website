@@ -7,6 +7,8 @@ function Register() {
   const [successMessage, setSuccessMessage] = useState(
     "Your registration has been submitted."
   );
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -44,10 +46,68 @@ function Register() {
       ...formData,
       [name]: value,
     });
+    // Clear error when user starts typing
+    if (error) setError("");
+  }
+
+  function validateForm() {
+    // Validate full name
+    if (!formData.fullName.trim()) {
+      setError("Full name is required");
+      return false;
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address");
+      return false;
+    }
+
+    // Validate phone number
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(formData.phone.replace(/\D/g, ""))) {
+      setError("Please enter a valid 10-digit phone number");
+      return false;
+    }
+
+    // Validate college
+    if (!formData.college.trim()) {
+      setError("College/Institution is required");
+      return false;
+    }
+
+    // Validate year
+    if (!formData.year) {
+      setError("Year of study is required");
+      return false;
+    }
+
+    // Validate department
+    if (!formData.department.trim()) {
+      setError("Department is required");
+      return false;
+    }
+
+    // Validate event
+    if (!formData.event) {
+      setError("Please select an event");
+      return false;
+    }
+
+    return true;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
 
     // Step 1: Save registration
     const { error } = await supabase
@@ -73,7 +133,8 @@ function Register() {
         error.hint
       );
 
-      alert("Registration failed. Please try again.");
+      setError("Registration failed. Please try again.");
+      setIsLoading(false);
       return;
     }
 
@@ -126,6 +187,7 @@ function Register() {
     // Step 3: Show success notification
     setSuccessMessage(emailNotice);
     setShowSuccess(true);
+    setIsLoading(false);
 
     // Step 4: Clear form
     setFormData({
@@ -159,6 +221,22 @@ function Register() {
           <button
             type="button"
             onClick={() => setShowSuccess(false)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div className="error-notification">
+          <div className="error-icon">⚠</div>
+          <div>
+            <strong>Registration Error</strong>
+            <p>{error}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setError("")}
           >
             ×
           </button>
@@ -388,9 +466,9 @@ function Register() {
 
             <div className="registration-submit">
 
-              <button type="submit">
-                Submit Registration
-                <span>→</span>
+              <button type="submit" disabled={isLoading}>
+                {isLoading ? "Submitting..." : "Submit Registration"}
+                {!isLoading && <span>→</span>}
               </button>
 
             </div>
