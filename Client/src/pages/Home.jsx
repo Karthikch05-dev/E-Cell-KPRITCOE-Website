@@ -1,8 +1,8 @@
 
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 function Home() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
@@ -200,6 +200,8 @@ function Home() {
               <article
                 className="event-card"
                 key={event.id}
+                onClick={() => navigate(`/events/${event.id}`)}
+                style={{ cursor: "pointer" }}
               >
 
                 <div className="event-date">
@@ -252,6 +254,7 @@ function Home() {
                   <Link
                     to="/register"
                     className="event-register"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Register →
                   </Link>
