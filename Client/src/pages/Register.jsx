@@ -1,14 +1,21 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 function Register() {
   const [events, setEvents] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState(
-    "Your registration has been submitted."
-  );
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    college: "",
+    year: "",
+    department: "",
+    event: "",
+    teamSize: "1",
+  });
 
   useEffect(() => {
     fetchEvents();
@@ -26,92 +33,47 @@ function Register() {
     }
 
     setEvents(data || []);
-  }
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    college: "",
-    year: "",
-    department: "",
-    event: "",
-    teamSize: "1",
-  });
+    // Automatically select event from URL
+    const params = new URLSearchParams(window.location.search);
+    const eventFromURL = params.get("event");
+
+    if (eventFromURL) {
+      setFormData((prev) => ({
+        ...prev,
+        event: eventFromURL,
+      }));
+    }
+  }
 
   function handleChange(e) {
     const { name, value } = e.target;
 
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
-    // Clear error when user starts typing
-    if (error) setError("");
-  }
-
-  function validateForm() {
-    // Validate full name
-    if (!formData.fullName.trim()) {
-      setError("Full name is required");
-      return false;
-    }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError("Please enter a valid email address");
-      return false;
-    }
-
-    // Validate phone number
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(formData.phone.replace(/\D/g, ""))) {
-      setError("Please enter a valid 10-digit phone number");
-      return false;
-    }
-
-    // Validate college
-    if (!formData.college.trim()) {
-      setError("College/Institution is required");
-      return false;
-    }
-
-    // Validate year
-    if (!formData.year) {
-      setError("Year of study is required");
-      return false;
-    }
-
-    // Validate department
-    if (!formData.department.trim()) {
-      setError("Department is required");
-      return false;
-    }
-
-    // Validate event
-    if (!formData.event) {
-      setError("Please select an event");
-      return false;
-    }
-
-    return true;
+    }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
 
-    // Validate form
-    if (!validateForm()) {
-      return;
+    // Disable accidental double submission
+    const submitButton = e.currentTarget.querySelector(
+      'button[type="submit"]'
+    );
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerText = "Submitting...";
     }
 
-    setIsLoading(true);
-
     try {
-      // Step 1: Save registration
-      const { error } = await supabase
+      // ==========================================
+      // 1. SAVE REGISTRATION TO SUPABASE
+      // ==========================================
+
+      const { error: registrationError } = await supabase
         .from("registrations")
         .insert([
           {
@@ -126,48 +88,50 @@ function Register() {
           },
         ]);
 
-      if (error) {
+      if (registrationError) {
         console.error(
           "Registration error:",
-          error.message,
-          error.details,
-          error.hint
+          registrationError
         );
 
-        setError("Registration failed. Please try again.");
-        setIsLoading(false);
+        alert(
+          "Registration failed. Please try again."
+        );
+
         return;
       }
 
-      // Step 2: Send confirmation email with timeout
-      let emailNotice =
-        "Your registration has been submitted.";
+      console.log("Registration saved successfully.");
+
+      // ==========================================
+      // 2. SEND CONFIRMATION EMAIL
+      // ==========================================
+
+      let emailSent = false;
 
       try {
-        // Create a timeout promise
-        const emailPromise = supabase.functions.invoke(
-          "send-registration-email",
-          {
-            body: {
-              name: formData.fullName,
-              email: formData.email,
-              event: formData.event,
-              teamSize: Number(formData.teamSize),
-              college: formData.college,
-            },
-          }
-        );
-
-        // Set 10 second timeout
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Email sending timeout")),
-            10000
-          )
+        console.log(
+          "Calling send-registration-email function..."
         );
 
         const { data: emailData, error: emailError } =
-          await Promise.race([emailPromise, timeoutPromise]);
+          await supabase.functions.invoke(
+            "send-registration-email",
+            {
+              body: {
+                name: formData.fullName,
+                email: formData.email,
+                event: formData.event,
+                teamSize: Number(formData.teamSize),
+                college: formData.college,
+              },
+            }
+          );
+
+        console.log(
+          "Email function response:",
+          emailData
+        );
 
         if (emailError) {
           console.error(
@@ -175,32 +139,37 @@ function Register() {
             emailError
           );
 
-          emailNotice =
-            "Your registration has been submitted, but the confirmation email could not be sent.";
-        } else {
-          console.log(
-            "Confirmation email sent:",
-            emailData
-          );
-
-          emailNotice =
-            "Your registration has been submitted. A confirmation email has been sent.";
+          throw emailError;
         }
+
+        emailSent = true;
       } catch (emailError) {
         console.error(
-          "Email request failed:",
-          emailError.message || emailError
+          "Confirmation email failed:",
+          emailError
         );
-
-        emailNotice =
-          "Your registration has been submitted, but the confirmation email could not be sent.";
       }
 
-      // Step 3: Show success notification
-      setSuccessMessage(emailNotice);
+      // ==========================================
+      // 3. SHOW RESULT
+      // ==========================================
+
+      if (emailSent) {
+        setSuccessMessage(
+          "Registration submitted successfully. A confirmation email has been sent to your email address."
+        );
+      } else {
+        setSuccessMessage(
+          "Registration submitted successfully, but the confirmation email could not be sent right now."
+        );
+      }
+
       setShowSuccess(true);
 
-      // Step 4: Clear form
+      // ==========================================
+      // 4. RESET FORM
+      // ==========================================
+
       setFormData({
         fullName: "",
         email: "",
@@ -212,13 +181,16 @@ function Register() {
         teamSize: "1",
       });
 
-      // Step 5: Hide notification
+      // Hide notification
       setTimeout(() => {
         setShowSuccess(false);
-      }, 4000);
+      }, 5000);
     } finally {
-      // Always clear loading state
-      setIsLoading(false);
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML =
+          'Submit Registration <span>→</span>';
+      }
     }
   }
 
@@ -229,7 +201,10 @@ function Register() {
           <div className="success-icon">✓</div>
 
           <div>
-            <strong>Registration Successful!</strong>
+            <strong>
+              Registration Successful!
+            </strong>
+
             <p>{successMessage}</p>
           </div>
 
@@ -242,37 +217,27 @@ function Register() {
         </div>
       )}
 
-      {error && (
-        <div className="error-notification">
-          <div className="error-icon">⚠</div>
-          <div>
-            <strong>Registration Error</strong>
-            <p>{error}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setError("")}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
       <main className="registration-page">
 
+        {/* HEADER */}
         <section className="registration-header">
+
           <p className="section-label">
             EVENT REGISTRATION
           </p>
 
-          <h1>Join the Experience.</h1>
+          <h1>
+            Join the Experience.
+          </h1>
 
           <p>
             Register for an E-Cell KPRIT-COE event and take
             your next step towards innovation and entrepreneurship.
           </p>
+
         </section>
 
+        {/* FORM */}
         <section className="registration-container">
 
           <form
@@ -280,11 +245,11 @@ function Register() {
             onSubmit={handleSubmit}
           >
 
-            {/* Full Name + Email */}
-
+            {/* NAME + EMAIL */}
             <div className="form-row">
 
               <div className="form-group">
+
                 <label htmlFor="fullName">
                   Full Name
                 </label>
@@ -298,9 +263,11 @@ function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
 
               <div className="form-group">
+
                 <label htmlFor="email">
                   Email Address
                 </label>
@@ -314,15 +281,16 @@ function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
 
             </div>
 
-            {/* Phone + College */}
-
+            {/* PHONE + COLLEGE */}
             <div className="form-row">
 
               <div className="form-group">
+
                 <label htmlFor="phone">
                   Phone Number
                 </label>
@@ -336,9 +304,11 @@ function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
 
               <div className="form-group">
+
                 <label htmlFor="college">
                   College / Institution
                 </label>
@@ -352,15 +322,16 @@ function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
 
             </div>
 
-            {/* Year + Department */}
-
+            {/* YEAR + DEPARTMENT */}
             <div className="form-row">
 
               <div className="form-group">
+
                 <label htmlFor="year">
                   Year of Study
                 </label>
@@ -372,6 +343,7 @@ function Register() {
                   onChange={handleChange}
                   required
                 >
+
                   <option value="">
                     Select your year
                   </option>
@@ -391,10 +363,13 @@ function Register() {
                   <option value="4th Year">
                     4th Year
                   </option>
+
                 </select>
+
               </div>
 
               <div className="form-group">
+
                 <label htmlFor="department">
                   Department
                 </label>
@@ -408,12 +383,12 @@ function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
 
             </div>
 
-            {/* Event */}
-
+            {/* EVENT */}
             <div className="form-group">
 
               <label htmlFor="event">
@@ -427,6 +402,7 @@ function Register() {
                 onChange={handleChange}
                 required
               >
+
                 <option value="">
                   Select an event
                 </option>
@@ -439,12 +415,12 @@ function Register() {
                     {event.title}
                   </option>
                 ))}
+
               </select>
 
             </div>
 
-            {/* Team Size */}
-
+            {/* TEAM SIZE */}
             <div className="form-group">
 
               <label htmlFor="teamSize">
@@ -458,6 +434,7 @@ function Register() {
                 onChange={handleChange}
                 required
               >
+
                 <option value="1">
                   1 Member
                 </option>
@@ -473,17 +450,17 @@ function Register() {
                 <option value="4">
                   4 Members
                 </option>
+
               </select>
 
             </div>
 
-            {/* Submit */}
-
+            {/* SUBMIT */}
             <div className="registration-submit">
 
-              <button type="submit" disabled={isLoading}>
-                {isLoading ? "Submitting..." : "Submit Registration"}
-                {!isLoading && <span>→</span>}
+              <button type="submit">
+                Submit Registration
+                <span>→</span>
               </button>
 
             </div>
