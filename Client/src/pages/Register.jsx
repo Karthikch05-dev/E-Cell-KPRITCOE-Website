@@ -18,6 +18,10 @@ function Register() {
     teamSize: "1",
   });
 
+  // ==========================================
+  // LOAD EVENTS
+  // ==========================================
+
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -47,6 +51,10 @@ function Register() {
     }
   }
 
+  // ==========================================
+  // HANDLE INPUT CHANGES
+  // ==========================================
+
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -56,10 +64,13 @@ function Register() {
     }));
   }
 
+  // ==========================================
+  // HANDLE REGISTRATION
+  // ==========================================
+
   async function handleSubmit(e) {
     e.preventDefault();
 
-    // Prevent accidental double submission
     if (isSubmitting) {
       return;
     }
@@ -67,9 +78,11 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-      // =====================================================
+      // ==========================================
       // 1. SAVE REGISTRATION TO SUPABASE
-      // =====================================================
+      // ==========================================
+
+      console.log("Submitting registration...");
 
       const { data: insertedData, error: registrationError } =
         await supabase
@@ -89,30 +102,46 @@ function Register() {
           .select()
           .single();
 
-      // -----------------------------------------------------
-      // REGISTRATION FAILED
-      // -----------------------------------------------------
+      // ==========================================
+      // SUPABASE INSERT ERROR
+      // ==========================================
 
       if (registrationError) {
-        console.error("Registration error:", {
-          message: registrationError.message,
-          details: registrationError.details,
-          hint: registrationError.hint,
-          code: registrationError.code,
-          status: registrationError.status,
-        });
+        console.error("=================================");
+        console.error("REGISTRATION INSERT ERROR");
+        console.error("Message:", registrationError.message);
+        console.error("Details:", registrationError.details);
+        console.error("Hint:", registrationError.hint);
+        console.error("Code:", registrationError.code);
+        console.error("Full error:", registrationError);
+        console.error("=================================");
 
-        alert("Registration failed. Please try again.");
+        alert(
+          `Registration failed.\n\n${registrationError.message}`
+        );
+
         return;
       }
 
-      // -----------------------------------------------------
-      // REGISTRATION SUCCESSFUL
-      // -----------------------------------------------------
+      // ==========================================
+      // CHECK REGISTRATION ID
+      // ==========================================
+
+      if (!insertedData || !insertedData.id) {
+        console.error(
+          "Registration inserted but no registration ID was returned:",
+          insertedData
+        );
+
+        alert(
+          "Registration could not be completed. Please try again."
+        );
+
+        return;
+      }
 
       console.log(
-        "Registration saved successfully:",
-        insertedData
+        "Registration saved successfully."
       );
 
       console.log(
@@ -120,9 +149,17 @@ function Register() {
         insertedData.id
       );
 
-      // =====================================================
-      // 2. TRY TO SEND CONFIRMATION EMAIL
-      // =====================================================
+      // ==========================================
+      // 2. SEND CONFIRMATION EMAIL
+      // ==========================================
+      //
+      // IMPORTANT:
+      // If the email function fails, we DO NOT
+      // consider the registration failed.
+      //
+      // Registration is already safely stored
+      // in Supabase.
+      // ==========================================
 
       let emailSent = false;
 
@@ -131,42 +168,50 @@ function Register() {
           "Calling send-registration-email function..."
         );
 
-        const { data: emailData, error: emailError } =
-          await supabase.functions.invoke(
-            "send-registration-email",
-            {
-              body: {
-                registrationId: insertedData.id,
+        const {
+          data: emailData,
+          error: emailError,
+        } = await supabase.functions.invoke(
+          "send-registration-email",
+          {
+            body: {
+              registrationId: insertedData.id,
 
-                name: insertedData.full_name,
-                email: insertedData.email,
-                phone: insertedData.phone,
-                college: insertedData.college,
-                year: insertedData.year,
-                department: insertedData.department,
-                event: insertedData.event,
-                teamSize: insertedData.team_size,
-                createdAt: insertedData.created_at,
-              },
-            }
-          );
+              name: insertedData.full_name,
+              email: insertedData.email,
+              phone: insertedData.phone,
+              college: insertedData.college,
+              year: insertedData.year,
+              department: insertedData.department,
+              event: insertedData.event,
+              teamSize: Number(insertedData.team_size),
+
+              createdAt: insertedData.created_at,
+            },
+          }
+        );
 
         console.log(
           "Email function response:",
           emailData
         );
 
-        console.log(
-          "Email function error:",
-          emailError
-        );
+        if (emailError) {
+          console.error(
+            "Email function error:",
+            emailError
+          );
 
-        if (!emailError && emailData?.success === true) {
+          throw emailError;
+        }
+
+        // We only consider the email successful
+        // when the Edge Function explicitly returns success.
+        if (emailData?.success === true) {
           emailSent = true;
         }
+
       } catch (emailError) {
-        // IMPORTANT:
-        // Email failure must NOT make registration fail.
         console.error(
           "Confirmation email failed:",
           emailError
@@ -175,9 +220,9 @@ function Register() {
         emailSent = false;
       }
 
-      // =====================================================
-      // 3. SHOW RESULT TO USER
-      // =====================================================
+      // ==========================================
+      // 3. SHOW RESULT
+      // ==========================================
 
       if (emailSent) {
         setSuccessMessage(
@@ -191,9 +236,9 @@ function Register() {
 
       setShowSuccess(true);
 
-      // =====================================================
+      // ==========================================
       // 4. RESET FORM
-      // =====================================================
+      // ==========================================
 
       setFormData({
         fullName: "",
@@ -206,31 +251,42 @@ function Register() {
         teamSize: "1",
       });
 
-      // Hide notification after 5 seconds
+      // ==========================================
+      // 5. HIDE SUCCESS MESSAGE
+      // ==========================================
+
       setTimeout(() => {
         setShowSuccess(false);
       }, 5000);
+
     } catch (error) {
-      // This catches unexpected frontend errors.
       console.error(
         "Unexpected registration error:",
         error
       );
 
-      alert("Something went wrong. Please try again.");
+      alert(
+        "Something went wrong. Please try again."
+      );
+
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  // ==========================================
+  // UI
+  // ==========================================
+
   return (
     <>
-      {/* =====================================================
+      {/* ========================================
           SUCCESS NOTIFICATION
-      ===================================================== */}
+      ======================================== */}
 
       {showSuccess && (
         <div className="success-notification">
+
           <div className="success-icon">
             ✓
           </div>
@@ -251,16 +307,15 @@ function Register() {
           >
             ×
           </button>
+
         </div>
       )}
 
-      {/* =====================================================
-          REGISTRATION PAGE
-      ===================================================== */}
-
       <main className="registration-page">
 
-        {/* HEADER */}
+        {/* ========================================
+            HEADER
+        ======================================== */}
 
         <section className="registration-header">
 
@@ -279,7 +334,9 @@ function Register() {
 
         </section>
 
-        {/* FORM */}
+        {/* ========================================
+            REGISTRATION FORM
+        ======================================== */}
 
         <section className="registration-container">
 
@@ -288,9 +345,9 @@ function Register() {
             onSubmit={handleSubmit}
           >
 
-            {/* =================================================
+            {/* ====================================
                 FULL NAME + EMAIL
-            ================================================= */}
+            ==================================== */}
 
             <div className="form-row">
 
@@ -332,9 +389,9 @@ function Register() {
 
             </div>
 
-            {/* =================================================
+            {/* ====================================
                 PHONE + COLLEGE
-            ================================================= */}
+            ==================================== */}
 
             <div className="form-row">
 
@@ -376,9 +433,9 @@ function Register() {
 
             </div>
 
-            {/* =================================================
+            {/* ====================================
                 YEAR + DEPARTMENT
-            ================================================= */}
+            ==================================== */}
 
             <div className="form-row">
 
@@ -440,9 +497,9 @@ function Register() {
 
             </div>
 
-            {/* =================================================
+            {/* ====================================
                 EVENT
-            ================================================= */}
+            ==================================== */}
 
             <div className="form-group">
 
@@ -475,9 +532,9 @@ function Register() {
 
             </div>
 
-            {/* =================================================
+            {/* ====================================
                 TEAM SIZE
-            ================================================= */}
+            ==================================== */}
 
             <div className="form-group">
 
@@ -513,9 +570,9 @@ function Register() {
 
             </div>
 
-            {/* =================================================
+            {/* ====================================
                 SUBMIT
-            ================================================= */}
+            ==================================== */}
 
             <div className="registration-submit">
 
@@ -528,8 +585,11 @@ function Register() {
                   : "Submit Registration"}
 
                 {!isSubmitting && (
-                  <span>→</span>
+                  <span>
+                    →
+                  </span>
                 )}
+
               </button>
 
             </div>
