@@ -5,6 +5,7 @@ function Register() {
   const [events, setEvents] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -58,64 +59,70 @@ function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    // Disable accidental double submission
-    const submitButton = e.currentTarget.querySelector(
-      'button[type="submit"]'
-    );
-
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.innerText = "Submitting...";
+    // Prevent accidental double submission
+    if (isSubmitting) {
+      return;
     }
 
-    try {
-      // ==========================================
-      // 1. SAVE REGISTRATION TO SUPABASE
-      // ==========================================
+    setIsSubmitting(true);
 
-      const { data: insertedData, error: registrationError } = await supabase
-        .from("registrations")
-        .insert([
-          {
-            full_name: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-            college: formData.college,
-            year: formData.year,
-            department: formData.department,
-            event: formData.event,
-            team_size: Number(formData.teamSize),
-          },
-        ])
-        .select();
+    try {
+      // =====================================================
+      // 1. SAVE REGISTRATION TO SUPABASE
+      // =====================================================
+
+      const { data: insertedData, error: registrationError } =
+        await supabase
+          .from("registrations")
+          .insert([
+            {
+              full_name: formData.fullName,
+              email: formData.email,
+              phone: formData.phone,
+              college: formData.college,
+              year: formData.year,
+              department: formData.department,
+              event: formData.event,
+              team_size: Number(formData.teamSize),
+            },
+          ])
+          .select()
+          .single();
+
+      // -----------------------------------------------------
+      // REGISTRATION FAILED
+      // -----------------------------------------------------
 
       if (registrationError) {
-        console.error(
-          "Registration error:",
-          registrationError
-        );
+        console.error("Registration error:", {
+          message: registrationError.message,
+          details: registrationError.details,
+          hint: registrationError.hint,
+          code: registrationError.code,
+          status: registrationError.status,
+        });
 
-        alert(
-          "Registration failed. Please try again."
-        );
-
+        alert("Registration failed. Please try again.");
         return;
       }
 
-      const registration = insertedData?.[0];
-      if (!registration || !registration.id) {
-        console.error("No registration ID returned");
-        alert(
-          "Registration failed. Please try again."
-        );
-        return;
-      }
+      // -----------------------------------------------------
+      // REGISTRATION SUCCESSFUL
+      // -----------------------------------------------------
 
-      console.log("Registration saved successfully with ID:", registration.id);
+      console.log(
+        "Registration saved successfully:",
+        insertedData
+      );
 
-      // ==========================================
-      // 2. FORWARD TO GOOGLE APPS SCRIPT VIA EDGE FUNCTION
-      // ==========================================
+      console.log(
+        "Registration ID:",
+        insertedData.id
+      );
+
+      // =====================================================
+      // 2. TRY TO SEND CONFIRMATION EMAIL
+      // =====================================================
 
       let emailSent = false;
 
@@ -129,16 +136,17 @@ function Register() {
             "send-registration-email",
             {
               body: {
-                registrationId: registration.id,
-                name: formData.fullName,
-                email: formData.email,
-                phone: formData.phone,
-                college: formData.college,
-                year: formData.year,
-                department: formData.department,
-                event: formData.event,
-                teamSize: Number(formData.teamSize),
-                createdAt: registration.created_at,
+                registrationId: insertedData.id,
+
+                name: insertedData.full_name,
+                email: insertedData.email,
+                phone: insertedData.phone,
+                college: insertedData.college,
+                year: insertedData.year,
+                department: insertedData.department,
+                event: insertedData.event,
+                teamSize: insertedData.team_size,
+                createdAt: insertedData.created_at,
               },
             }
           );
@@ -148,42 +156,44 @@ function Register() {
           emailData
         );
 
-        if (emailError) {
-          console.error(
-            "Email function error:",
-            emailError
-          );
+        console.log(
+          "Email function error:",
+          emailError
+        );
 
-          throw emailError;
+        if (!emailError && emailData?.success === true) {
+          emailSent = true;
         }
-
-        emailSent = emailData?.success === true;
       } catch (emailError) {
+        // IMPORTANT:
+        // Email failure must NOT make registration fail.
         console.error(
           "Confirmation email failed:",
           emailError
         );
+
+        emailSent = false;
       }
 
-      // ==========================================
-      // 3. SHOW RESULT
-      // ==========================================
+      // =====================================================
+      // 3. SHOW RESULT TO USER
+      // =====================================================
 
       if (emailSent) {
         setSuccessMessage(
-          "Registration submitted successfully. A confirmation email has been sent to your email address."
+          "Your registration has been submitted successfully. A confirmation email has been sent to your email address."
         );
       } else {
         setSuccessMessage(
-          "Registration submitted successfully, but the confirmation email could not be sent right now."
+          "Your registration has been submitted successfully, but the confirmation email could not be sent right now."
         );
       }
 
       setShowSuccess(true);
 
-      // ==========================================
+      // =====================================================
       // 4. RESET FORM
-      // ==========================================
+      // =====================================================
 
       setFormData({
         fullName: "",
@@ -196,31 +206,43 @@ function Register() {
         teamSize: "1",
       });
 
-      // Hide notification
+      // Hide notification after 5 seconds
       setTimeout(() => {
         setShowSuccess(false);
       }, 5000);
+    } catch (error) {
+      // This catches unexpected frontend errors.
+      console.error(
+        "Unexpected registration error:",
+        error
+      );
+
+      alert("Something went wrong. Please try again.");
     } finally {
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.innerHTML =
-          'Submit Registration <span>→</span>';
-      }
+      setIsSubmitting(false);
     }
   }
 
   return (
     <>
+      {/* =====================================================
+          SUCCESS NOTIFICATION
+      ===================================================== */}
+
       {showSuccess && (
         <div className="success-notification">
-          <div className="success-icon">✓</div>
+          <div className="success-icon">
+            ✓
+          </div>
 
           <div>
             <strong>
               Registration Successful!
             </strong>
 
-            <p>{successMessage}</p>
+            <p>
+              {successMessage}
+            </p>
           </div>
 
           <button
@@ -232,9 +254,14 @@ function Register() {
         </div>
       )}
 
+      {/* =====================================================
+          REGISTRATION PAGE
+      ===================================================== */}
+
       <main className="registration-page">
 
         {/* HEADER */}
+
         <section className="registration-header">
 
           <p className="section-label">
@@ -253,6 +280,7 @@ function Register() {
         </section>
 
         {/* FORM */}
+
         <section className="registration-container">
 
           <form
@@ -260,7 +288,10 @@ function Register() {
             onSubmit={handleSubmit}
           >
 
-            {/* NAME + EMAIL */}
+            {/* =================================================
+                FULL NAME + EMAIL
+            ================================================= */}
+
             <div className="form-row">
 
               <div className="form-group">
@@ -301,7 +332,10 @@ function Register() {
 
             </div>
 
-            {/* PHONE + COLLEGE */}
+            {/* =================================================
+                PHONE + COLLEGE
+            ================================================= */}
+
             <div className="form-row">
 
               <div className="form-group">
@@ -342,7 +376,10 @@ function Register() {
 
             </div>
 
-            {/* YEAR + DEPARTMENT */}
+            {/* =================================================
+                YEAR + DEPARTMENT
+            ================================================= */}
+
             <div className="form-row">
 
               <div className="form-group">
@@ -403,7 +440,10 @@ function Register() {
 
             </div>
 
-            {/* EVENT */}
+            {/* =================================================
+                EVENT
+            ================================================= */}
+
             <div className="form-group">
 
               <label htmlFor="event">
@@ -435,7 +475,10 @@ function Register() {
 
             </div>
 
-            {/* TEAM SIZE */}
+            {/* =================================================
+                TEAM SIZE
+            ================================================= */}
+
             <div className="form-group">
 
               <label htmlFor="teamSize">
@@ -470,12 +513,23 @@ function Register() {
 
             </div>
 
-            {/* SUBMIT */}
+            {/* =================================================
+                SUBMIT
+            ================================================= */}
+
             <div className="registration-submit">
 
-              <button type="submit">
-                Submit Registration
-                <span>→</span>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "Submitting..."
+                  : "Submit Registration"}
+
+                {!isSubmitting && (
+                  <span>→</span>
+                )}
               </button>
 
             </div>
