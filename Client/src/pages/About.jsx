@@ -1,73 +1,73 @@
 function About() {
   const leadership = [
-    ["Dr. Sreenath Kashyap", "Chief Patron"],
-    ["Y V D Chandra Sekhar", "Faculty Advisor"],
+    ["Mr. Dr. Sreenath Kashyap", "Chief Patron"],
+    ["Mr. Y V D Chandra Sekhar", "Faculty Advisor"],
   ];
 
   const coreTeam = [
-    ["Manikanta Datta Sriteja", "President"],
-    ["Hari Prasad", "Vice President"],
-    ["Abhishek Kalvala", "General Secretary"],
-    ["Manasvitha", "Joint Secretary"],
-    ["Poojitha", "Treasurer"],
+    ["Mr. Manikanta Datta Sriteja", "President"],
+    ["Mr. Hari Prasad", "Vice President"],
+    ["Mr. Abhishek Kalvala", "General Secretary"],
+    ["Ms. Manasvitha", "Joint Secretary"],
+    ["Ms. Poojitha", "Treasurer"],
   ];
 
   const departments = [
     {
       title: "Innovation & Entrepreneurship",
       members: [
-        ["Khushi Tiwari", "Head"],
-        ["G. Varshitha", "Member"],
+        ["Ms. Khushi Tiwari", "Head"],
+        ["Ms. G. Varshitha", "Member"],
       ],
     },
     {
       title: "Corporate Relations & Sponsorship",
       members: [
-        ["Bhavya Bhaireddy", "Head"],
-        ["Ankitha", "Member"],
+        ["Ms. Bhavya Bhaireddy", "Head"],
+        ["Ms. Ankitha", "Member"],
       ],
     },
     {
       title: "Events & Operations",
       members: [
-        ["Deepika Ganti", "Head"],
-        ["V. Meghana", "Member"],
+        ["Ms. Deepika Ganti", "Head"],
+        ["Ms. V. Meghana", "Member"],
       ],
     },
     {
       title: "Marketing & Branding",
       members: [
-        ["S. Rasmitha", "Head"],
-        ["Varshini", "Member"],
+        ["Ms. S. Rasmitha", "Head"],
+        ["Ms. Varshini", "Member"],
       ],
     },
     {
       title: "Public Relations & Outreach",
       members: [
-        ["Chandra Shekar", "Head"],
-        ["Shukla", "Member"],
+        ["Mr. Chandra Shekar", "Head"],
+        ["Ms. Shukla", "Member"],
       ],
     },
     {
       title: "Promotion & Media",
       members: [
-        ["K. Sharon", "Head"],
-        ["G. Shekar", "Member"],
+        ["Ms. K. Sharon", "Head"],
+        ["Mr. G. Shekar", "Member"],
       ],
     },
     {
       title: "Technical & Development",
       members: [
-        ["Srikanth Parikibanda", "Head"],
-        ["T. Siddartha", "Member"],
-        ["Akshay", "Member"],
+        ["Mr. Srikanth Parikibanda", "Head"],
+        ["Mr. T. Siddartha", "Member"],
+        ["Mr. Akshay", "Member"],
       ],
     },
     {
       title: "Research & Documentation",
       members: [
-        ["Rajender", "Head"],
-        ["Vyas", "Member"],
+        ["Mr. Rajender", "Head"],
+        ["Mr. Vyas", "Member"],
       ],
     },
   ];
