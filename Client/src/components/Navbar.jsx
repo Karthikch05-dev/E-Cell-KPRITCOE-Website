@@ -23,7 +23,7 @@ function Navbar() {
           className="nec-logo"
         />
 
-        <span className="brand-divider">×</span>
+        <span className="brand-divider">=</span>
 
         {/* E-Cell Logo */}
         <img
