@@ -1,6 +1,6 @@
 function About() {
   const leadership = [
-    ["Mr. Dr. Sreenath Kashyap", "Chief Patron"],
+    ["Dr. Sreenath Kashyap", "Chief Patron"],
     ["Mr. Y V D Chandra Sekhar", "Faculty Advisor"],
   ];
 
