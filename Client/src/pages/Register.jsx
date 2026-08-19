@@ -251,6 +251,7 @@ function Register() {
       alert(
         "Something went wrong. Please try again."
       );
+
     } finally {
       setIsSubmitting(false);
     }
@@ -333,15 +334,31 @@ function Register() {
 
             <div className="eureka-registration-notice">
 
+              <p className="eureka-notice-title">
+                <strong>
+                  Important — EUREKA Registration Required
+                </strong>
+              </p>
+
               <p>
-                <strong>Important:</strong> Before filling
-                this form, you need to first register through
-                the official EUREKA registration website using
-                our NEC ID:
+                You need to first register through the official
+                EUREKA registration website before filling out
+                this form.
+              </p>
+
+              <p>
+                While registering on the EUREKA website, use our
+                NEC ID:
               </p>
 
               <p className="nec-id">
                 NEC ID: <strong>NEC2610645</strong>
+              </p>
+
+              <p>
+                After completing the EUREKA registration, come back
+                to this page and continue with the E-Cell KPRIT-COE
+                registration.
               </p>
 
               <a
@@ -351,6 +368,7 @@ function Register() {
                 className="eureka-registration-btn"
               >
                 EUREKA! Registration
+                <span>↗</span>
               </a>
 
             </div>
