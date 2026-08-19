@@ -80,7 +80,7 @@ function setup() {
   }
   
   // Add headers if they don't exist
-  const range = sheet.getRange(1, 1, 1, 11);
+  const range = sheet.getRange(1, 1, 1, 13);
   const values = range.getValues();
   
   if (values[0][0] === '') {
@@ -95,6 +95,8 @@ function setup() {
       'Department',
       'Event',
       'Team Size',
+      'Eureka ID',
+      'Idea Description',
       'Email Status'
     ];
     
@@ -201,6 +203,8 @@ function doPost(e) {
       payload.department || '',
       payload.event,
       payload.teamSize || 1,
+      payload.eurekaId || '',
+      payload.ideaDescription || '',
       'Pending'
     ];
     
@@ -221,7 +225,7 @@ function doPost(e) {
     
     // Update email status in the sheet
     const lastRow = sheet.getLastRow();
-    sheet.getRange(lastRow, 11).setValue(emailStatus);
+    sheet.getRange(lastRow, 13).setValue(emailStatus);
     
     // Return success response
     return ContentService.createTextOutput(
@@ -255,6 +259,8 @@ function sendConfirmationEmail(registration) {
     event,
     registrationId,
     teamSize,
+    eurekaId,
+    ideaDescription,
     college,
     year,
     department,
@@ -409,6 +415,14 @@ function sendConfirmationEmail(registration) {
               <div class="detail-row">
                 <span class="detail-label">Team Size:</span>
                 <span class="detail-value">${teamSize} Member(s)</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Eureka ID:</span>
+                <span class="detail-value">${escapeHtml(eurekaId || 'N/A')}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Idea Description:</span>
+                <span class="detail-value">${escapeHtml(ideaDescription || 'N/A')}</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">College/Institution:</span>
@@ -593,7 +607,9 @@ The Google Sheet uses these columns:
 | H | Department | Department |
 | I | Event | Event name |
 | J | Team Size | Number of team members |
-| K | Email Status | Email Sent / Email Failed / Already Processed |
+| K | Eureka ID | Eureka identifier supplied by the participant |
+| L | Idea Description | Participant's idea description |
+| M | Email Status | Email Sent / Email Failed / Already Processed |
 
 ## Reference: Apps Script Functions
 

@@ -62,6 +62,9 @@ Ensure your Supabase database has the following tables:
 - department (text)
 - event (text)
 - team_size (integer)
+- idea (text, legacy compatibility)
+- eureka_id (text)
+- idea_description (text)
 - created_at (timestamp)
 ```
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase } from "../lib/supabase";
 
 const EUREKA_URL = "https://www.ecell.in/eureka/register";
 const NEC_ID = "NEC2610645";
@@ -14,7 +14,8 @@ export default function Registration() {
     department: "",
     event: "",
     team_size: "",
-    idea: "",
+    eureka_id: "",
+    idea_description: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -33,11 +34,28 @@ export default function Registration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (submitting) return;
+
+    const normalizedFormData = Object.fromEntries(
+      Object.entries(formData).map(([key, value]) => [
+        key,
+        typeof value === "string" ? value.trim() : value,
+      ])
+    );
+
+    if (!normalizedFormData.eureka_id) {
+      setError("Please enter your Eureka ID before submitting.");
+      return;
+    }
+
+    if (!normalizedFormData.idea_description) {
+      setError("Please describe your idea before submitting.");
+      return;
+    }
+
     setSubmitting(true);
     setSuccess(false);
     setError("");
-
-    console.log("Submitting registration...");
 
     try {
       const {
@@ -49,8 +67,9 @@ export default function Registration() {
         department,
         event,
         team_size,
-        idea,
-      } = formData;
+        eureka_id,
+        idea_description,
+      } = normalizedFormData;
 
       const { error: insertError } = await supabase
         .from("registrations")
@@ -64,7 +83,9 @@ export default function Registration() {
             department,
             event,
             team_size,
-            idea,
+            idea: idea_description,
+            eureka_id,
+            idea_description,
           },
         ]);
 
@@ -99,7 +120,8 @@ export default function Registration() {
         department: "",
         event: "",
         team_size: "",
-        idea: "",
+        eureka_id: "",
+        idea_description: "",
       });
     } catch (err) {
       console.error("Unexpected registration error:", err);
@@ -151,9 +173,9 @@ export default function Registration() {
           </h3>
 
           <p>
-            You need to first register through the
-            official EUREKA registration website
-            before filling out this form.
+            Before registering for this event, you must
+            first register for Eureka and obtain your
+            Eureka ID.
           </p>
 
           <p>
@@ -178,7 +200,7 @@ export default function Registration() {
             rel="noopener noreferrer"
             className="eureka-registration-button"
           >
-            EUREKA! Registration
+            Register for Eureka
           </a>
 
         </div>
@@ -449,18 +471,37 @@ export default function Registration() {
           </div>
 
 
-          {/* POST YOUR IDEA */}
+          {/* EUREKA ID */}
+
+          <div className="form-group">
+            <label htmlFor="eureka_id">
+              Eureka ID
+            </label>
+
+            <input
+              id="eureka_id"
+              name="eureka_id"
+              type="text"
+              value={formData.eureka_id}
+              onChange={handleChange}
+              placeholder="Enter your Eureka ID"
+              required
+            />
+          </div>
+
+
+          {/* IDEA DESCRIPTION */}
 
           <div className="form-group">
 
-            <label htmlFor="idea">
-              Post Your Idea
+            <label htmlFor="idea_description">
+              Describe Your Idea
             </label>
 
             <textarea
-              id="idea"
-              name="idea"
-              value={formData.idea}
+              id="idea_description"
+              name="idea_description"
+              value={formData.idea_description}
               onChange={handleChange}
               placeholder="Briefly describe your idea..."
               rows="6"
