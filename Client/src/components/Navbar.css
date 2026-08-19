@@ -30,22 +30,32 @@
 
 
 .brand-logo {
-  width: 190px;
-  height: 65px;
-  object-fit: contain;
   display: block;
+  height: 45px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
 }
 
-.brand-link img {
-  max-width: 100%;
-  flex: 0 1 auto;
+/* Specific logo overrides — all sized to match the KPRIT logo */
+.kprit-logo {
+  height: 45px;
+}
+
+.nec-logo {
+  height: 45px;
+}
+
+.ecell-logo {
+  height: 45px;
 }
 
 
 .brand-divider {
-  font-size: 24px;
-  font-weight: 300;
-  color: #172b57;
+  width: 1px;
+  height: 35px;
+  background: #d0d5df;
+  flex-shrink: 0;
 }
 
 
@@ -134,12 +144,12 @@
   }
 
   .brand-logo {
-    width: 155px;
-    height: 55px;
+    height: 40px;
+    max-width: 130px;
   }
 
   .brand-divider {
-    font-size: 20px;
+    height: 30px;
   }
 
   .navbar-menu {
@@ -165,12 +175,12 @@
   }
 
   .brand-logo {
-    width: 135px;
-    height: 48px;
+    height: 35px;
+    max-width: 110px;
   }
 
   .brand-divider {
-    font-size: 18px;
+    height: 25px;
   }
 
   .navbar-menu {
