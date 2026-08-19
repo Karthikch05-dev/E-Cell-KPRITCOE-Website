@@ -2963,59 +2963,90 @@ css
 
 /* =========================================
    EUREKA REGISTRATION NOTICE
-   ========================================= */
+========================================= */
 
 .eureka-registration-notice {
   margin-bottom: 28px;
-  padding: 20px 22px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 22px 24px;
+
+  background: #fff7f2;
+
+  border: 1px solid #f0cdbb;
+  border-left: 5px solid #f15a24;
+
+  border-radius: 10px;
+
+  box-shadow:
+    0 6px 20px rgba(23, 43, 87, 0.05);
 }
 
 .eureka-registration-notice p {
   margin: 0 0 14px;
+
+  color: #566174;
+
   font-size: 15px;
   line-height: 1.7;
-  color: #d8d8d8;
+}
+
+.eureka-registration-notice p:last-of-type {
+  margin-bottom: 18px;
 }
 
 .eureka-registration-notice strong {
-  color: #ffffff;
+  color: #172b57;
+  font-weight: 800;
 }
+
+/* NEC ID */
 
 .eureka-id {
   display: inline-block;
-  margin-top: 4px;
-  padding: 4px 8px;
+
+  margin-left: 5px;
+  padding: 5px 10px;
+
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
+
+  background: #172b57;
   color: #ffffff;
-  font-weight: 700;
+
+  font-size: 14px;
+  font-weight: 800;
+
   letter-spacing: 0.5px;
 }
 
-/* Eureka Registration button */
+
+/* =========================================
+   EUREKA REGISTRATION BUTTON
+========================================= */
 
 .eureka-registration-button {
   display: inline-flex;
+
   align-items: center;
   justify-content: center;
+
   gap: 8px;
 
-  padding: 11px 18px;
+  padding: 12px 20px;
 
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
 
-  background: #ffffff;
-  color: #111111;
+  background: #f15a24;
+  color: #ffffff;
 
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
 
   text-decoration: none;
+
   cursor: pointer;
+
+  box-shadow:
+    0 6px 18px rgba(241, 90, 36, 0.18);
 
   transition:
     transform 0.2s ease,
@@ -3025,27 +3056,44 @@ css
 
 .eureka-registration-button:hover {
   transform: translateY(-2px);
-  background: #f0f0f0;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+
+  background: #172b57;
+
+  box-shadow:
+    0 10px 25px rgba(23, 43, 87, 0.18);
+
+  color: #ffffff;
 }
 
 .eureka-registration-button:active {
   transform: translateY(0);
 }
 
-/* Mobile */
+
+/* =========================================
+   EUREKA NOTICE MOBILE
+========================================= */
 
 @media (max-width: 600px) {
+
   .eureka-registration-notice {
-    padding: 17px;
+    padding: 18px;
+
     margin-bottom: 22px;
   }
 
   .eureka-registration-notice p {
     font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .eureka-id {
+    margin-left: 0;
+    margin-top: 5px;
   }
 
   .eureka-registration-button {
     width: 100%;
   }
-}}
+
+}
