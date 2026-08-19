@@ -1,538 +1,410 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import React, { useState } from "react";
+import { supabase } from "./supabaseClient";
 
-function Register() {
-  const [events, setEvents] = useState([]);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const EUREKA_URL = "https://www.ecell.in/eureka/register";
+const NEC_ID = "NEC2610645";
 
+export default function Registration() {
   const [formData, setFormData] = useState({
-    fullName: "",
+    full_name: "",
     email: "",
     phone: "",
     college: "",
     year: "",
     department: "",
     event: "",
-    teamSize: "1",
+    team_size: "",
+    idea: "",
   });
 
-  // ==========================================
-  // LOAD EVENTS
-  // ==========================================
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  async function fetchEvents() {
-    const { data, error } = await supabase
-      .from("events")
-      .select("id, title, event_date")
-      .order("event_date", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching events:", error);
-      return;
-    }
-
-    setEvents(data || []);
-
-    // Automatically select event from URL
-    const params = new URLSearchParams(window.location.search);
-    const eventFromURL = params.get("event");
-
-    if (eventFromURL) {
-      setFormData((prev) => ({
-        ...prev,
-        event: eventFromURL,
-      }));
-    }
-  }
-
-  // ==========================================
-  // HANDLE INPUT CHANGES
-  // ==========================================
-
-  function handleChange(e) {
+  const handleChange = (e) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  }
+  };
 
-  // ==========================================
-  // HANDLE REGISTRATION
-  // ==========================================
-
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isSubmitting) {
-      return;
-    }
+    setSubmitting(true);
+    setSuccess(false);
+    setError("");
 
-    setIsSubmitting(true);
+    console.log("Submitting registration...");
 
     try {
-      // ==========================================
-      // 1. SAVE REGISTRATION TO SUPABASE
-      // ==========================================
+      const {
+        full_name,
+        email,
+        phone,
+        college,
+        year,
+        department,
+        event,
+        team_size,
+        idea,
+      } = formData;
 
-      console.log("Submitting registration...");
+      const { error: insertError } = await supabase
+        .from("registrations")
+        .insert([
+          {
+            full_name,
+            email,
+            phone,
+            college,
+            year,
+            department,
+            event,
+            team_size,
+            idea,
+          },
+        ]);
 
-      const { data: insertedData, error: registrationError } =
-        await supabase
-          .from("registrations")
-          .insert([
-            {
-              full_name: formData.fullName,
-              email: formData.email,
-              phone: formData.phone,
-              college: formData.college,
-              year: formData.year,
-              department: formData.department,
-              event: formData.event,
-              team_size: Number(formData.teamSize),
-            },
-          ])
-          .select()
-          .single();
-
-      // ==========================================
-      // SUPABASE INSERT ERROR
-      // ==========================================
-
-      if (registrationError) {
+      if (insertError) {
         console.error("=================================");
         console.error("REGISTRATION INSERT ERROR");
-        console.error("Message:", registrationError.message);
-        console.error("Details:", registrationError.details);
-        console.error("Hint:", registrationError.hint);
-        console.error("Code:", registrationError.code);
-        console.error("Full error:", registrationError);
+        console.error("Message:", insertError.message);
+        console.error("Details:", insertError.details);
+        console.error("Hint:", insertError.hint);
+        console.error("Code:", insertError.code);
+        console.error("Full error:", insertError);
         console.error("=================================");
 
-        alert(
-          `Registration failed.\n\n${registrationError.message}`
+        setError(
+          insertError.message ||
+            "Registration failed. Please try again."
         );
 
         return;
       }
 
-      // ==========================================
-      // CHECK REGISTRATION ID
-      // ==========================================
+      console.log("Registration successful.");
 
-      if (!insertedData || !insertedData.id) {
-        console.error(
-          "Registration inserted but no registration ID was returned:",
-          insertedData
-        );
-
-        alert(
-          "Registration could not be completed. Please try again."
-        );
-
-        return;
-      }
-
-      console.log("Registration saved successfully.");
-      console.log("Registration ID:", insertedData.id);
-
-      // ==========================================
-      // 2. SEND CONFIRMATION EMAIL
-      // ==========================================
-
-      let emailSent = false;
-
-      try {
-        console.log(
-          "Calling send-registration-email function..."
-        );
-
-        const {
-          data: emailData,
-          error: emailError,
-        } = await supabase.functions.invoke(
-          "send-registration-email",
-          {
-            body: {
-              registrationId: insertedData.id,
-
-              name: insertedData.full_name,
-              email: insertedData.email,
-              phone: insertedData.phone,
-              college: insertedData.college,
-              year: insertedData.year,
-              department: insertedData.department,
-              event: insertedData.event,
-              teamSize: Number(insertedData.team_size),
-
-              createdAt: insertedData.created_at,
-            },
-          }
-        );
-
-        console.log(
-          "Email function response:",
-          emailData
-        );
-
-        if (emailError) {
-          console.error(
-            "Email function error:",
-            emailError
-          );
-
-          throw emailError;
-        }
-
-        if (emailData?.success === true) {
-          emailSent = true;
-        }
-      } catch (emailError) {
-        console.error(
-          "Confirmation email failed:",
-          emailError
-        );
-
-        emailSent = false;
-      }
-
-      // ==========================================
-      // 3. SHOW SUCCESS NOTIFICATION
-      // ==========================================
-
-      if (emailSent) {
-        setSuccessMessage(
-          "Your registration has been submitted successfully. A confirmation email has been sent to your email address."
-        );
-      } else {
-        setSuccessMessage(
-          "Your registration has been submitted successfully, but the confirmation email could not be sent right now."
-        );
-      }
-
-      setShowSuccess(true);
-
-      // ==========================================
-      // 4. RESET FORM
-      // ==========================================
+      setSuccess(true);
 
       setFormData({
-        fullName: "",
+        full_name: "",
         email: "",
         phone: "",
         college: "",
         year: "",
         department: "",
         event: "",
-        teamSize: "1",
+        team_size: "",
+        idea: "",
       });
+    } catch (err) {
+      console.error("Unexpected registration error:", err);
 
-      // ==========================================
-      // 5. AUTO HIDE SUCCESS NOTIFICATION
-      // ==========================================
-
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 5000);
-
-    } catch (error) {
-      console.error(
-        "Unexpected registration error:",
-        error
+      setError(
+        err?.message ||
+          "Something went wrong. Please try again."
       );
-
-      alert(
-        "Something went wrong. Please try again."
-      );
-
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
-  }
-
-  // ==========================================
-  // UI
-  // ==========================================
+  };
 
   return (
-    <>
-      {/* ========================================
-          SUCCESS NOTIFICATION
-      ======================================== */}
+    <main className="registration-page">
 
-      {showSuccess && (
-        <div className="success-notification">
+      {/* =================================
+          REGISTRATION HEADER
+      ================================= */}
 
-          <div className="success-icon">
-            ✓
-          </div>
+      <div className="registration-header">
+        <p className="section-label">
+          E-CELL KPRIT-COE
+        </p>
 
-          <div>
-            <strong>
-              Registration Successful!
-            </strong>
+        <h1>Registration</h1>
 
-            <p>
-              {successMessage}
-            </p>
-          </div>
+        <p>
+          Register for the upcoming E-Cell KPRIT-COE
+          events and be part of the experience.
+        </p>
+      </div>
 
-          <button
-            type="button"
-            onClick={() => setShowSuccess(false)}
-          >
-            ×
-          </button>
 
-        </div>
-      )}
+      {/* =================================
+          FORM CONTAINER
+      ================================= */}
 
-      <main className="registration-page">
+      <div className="registration-container">
 
-        {/* ========================================
-            HEADER
-        ======================================== */}
+        {/* =================================
+            EUREKA REGISTRATION NOTICE
+        ================================= */}
 
-        <section className="registration-header">
+        <div className="eureka-registration-notice">
 
-          <p className="section-label">
-            EVENT REGISTRATION
-          </p>
-
-          <h1>
-            Join the Experience.
-          </h1>
+          <h3>
+            Important — EUREKA Registration Required
+          </h3>
 
           <p>
-            Register for an E-Cell KPRIT-COE event and take
-            your next step towards innovation and entrepreneurship.
+            You need to first register through the
+            official EUREKA registration website
+            before filling out this form.
           </p>
 
-        </section>
+          <p>
+            While registering on the EUREKA website,
+            use our NEC ID:
+          </p>
 
-        {/* ========================================
-            REGISTRATION FORM
-        ======================================== */}
+          <p className="eureka-nec-id">
+            NEC ID:
+            <strong>{NEC_ID}</strong>
+          </p>
 
-        <section className="registration-container">
+          <p>
+            After completing the EUREKA registration,
+            come back to this page and continue with
+            the E-Cell KPRIT-COE registration.
+          </p>
 
-          <form
-            className="registration-form"
-            onSubmit={handleSubmit}
+          <a
+            href={EUREKA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="eureka-registration-button"
           >
+            EUREKA! Registration
+          </a>
 
-            {/* ====================================
-                EUREKA REGISTRATION NOTICE
-            ==================================== */}
+        </div>
 
-            <div className="eureka-registration-notice">
 
-              <p className="eureka-notice-title">
-                <strong>
-                  Important — EUREKA Registration Required
-                </strong>
-              </p>
+        {/* =================================
+            SUCCESS MESSAGE
+        ================================= */}
+
+        {success && (
+          <div className="success-notification">
+
+            <div className="success-icon">
+              ✓
+            </div>
+
+            <div>
+              <strong>
+                Registration Successful
+              </strong>
 
               <p>
-                You need to first register through the official
-                EUREKA registration website before filling out
-                this form.
+                Your registration has been submitted
+                successfully.
               </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSuccess(false)}
+              aria-label="Close notification"
+            >
+              ×
+            </button>
+
+          </div>
+        )}
+
+
+        {/* =================================
+            ERROR MESSAGE
+        ================================= */}
+
+        {error && (
+          <div className="error-notification">
+
+            <div className="error-icon">
+              !
+            </div>
+
+            <div>
+              <strong>
+                Registration Failed
+              </strong>
 
               <p>
-                While registering on the EUREKA website, use our
-                NEC ID:
+                {error}
               </p>
-
-              <p className="nec-id">
-                NEC ID: <strong>NEC2610645</strong>
-              </p>
-
-              <p>
-                After completing the EUREKA registration, come back
-                to this page and continue with the E-Cell KPRIT-COE
-                registration.
-              </p>
-
-              <a
-                href="https://www.ecell.in/eureka/register"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="eureka-registration-btn"
-              >
-                EUREKA! Registration
-                <span>↗</span>
-              </a>
-
             </div>
 
-            {/* ====================================
-                FULL NAME + EMAIL
-            ==================================== */}
+            <button
+              type="button"
+              onClick={() => setError("")}
+              aria-label="Close error notification"
+            >
+              ×
+            </button>
 
-            <div className="form-row">
+          </div>
+        )}
 
-              <div className="form-group">
 
-                <label htmlFor="fullName">
-                  Full Name
-                </label>
+        {/* =================================
+            REGISTRATION FORM
+        ================================= */}
 
-                <input
-                  id="fullName"
-                  type="text"
-                  name="fullName"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  required
-                />
+        <form
+          className="registration-form"
+          onSubmit={handleSubmit}
+        >
 
-              </div>
+          {/* FULL NAME + EMAIL */}
 
-              <div className="form-group">
-
-                <label htmlFor="email">
-                  Email Address
-                </label>
-
-                <input
-                  id="email"
-                  type="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-
-              </div>
-
-            </div>
-
-            {/* ====================================
-                PHONE + COLLEGE
-            ==================================== */}
-
-            <div className="form-row">
-
-              <div className="form-group">
-
-                <label htmlFor="phone">
-                  Phone Number
-                </label>
-
-                <input
-                  id="phone"
-                  type="tel"
-                  name="phone"
-                  placeholder="Enter your phone number"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                />
-
-              </div>
-
-              <div className="form-group">
-
-                <label htmlFor="college">
-                  College / Institution
-                </label>
-
-                <input
-                  id="college"
-                  type="text"
-                  name="college"
-                  placeholder="Enter your college"
-                  value={formData.college}
-                  onChange={handleChange}
-                  required
-                />
-
-              </div>
-
-            </div>
-
-            {/* ====================================
-                YEAR + DEPARTMENT
-            ==================================== */}
-
-            <div className="form-row">
-
-              <div className="form-group">
-
-                <label htmlFor="year">
-                  Year of Study
-                </label>
-
-                <select
-                  id="year"
-                  name="year"
-                  value={formData.year}
-                  onChange={handleChange}
-                  required
-                >
-
-                  <option value="">
-                    Select your year
-                  </option>
-
-                  <option value="1st Year">
-                    1st Year
-                  </option>
-
-                  <option value="2nd Year">
-                    2nd Year
-                  </option>
-
-                  <option value="3rd Year">
-                    3rd Year
-                  </option>
-
-                  <option value="4th Year">
-                    4th Year
-                  </option>
-
-                </select>
-
-              </div>
-
-              <div className="form-group">
-
-                <label htmlFor="department">
-                  Department
-                </label>
-
-                <input
-                  id="department"
-                  type="text"
-                  name="department"
-                  placeholder="e.g. CSE"
-                  value={formData.department}
-                  onChange={handleChange}
-                  required
-                />
-
-              </div>
-
-            </div>
-
-            {/* ====================================
-                EVENT
-            ==================================== */}
+          <div className="form-row">
 
             <div className="form-group">
+              <label htmlFor="full_name">
+                Full Name
+              </label>
 
+              <input
+                id="full_name"
+                name="full_name"
+                type="text"
+                value={formData.full_name}
+                onChange={handleChange}
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+
+
+            <div className="form-group">
+              <label htmlFor="email">
+                Email Address
+              </label>
+
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+          </div>
+
+
+          {/* PHONE + COLLEGE */}
+
+          <div className="form-row">
+
+            <div className="form-group">
+              <label htmlFor="phone">
+                Phone Number
+              </label>
+
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="Enter your phone number"
+                required
+              />
+            </div>
+
+
+            <div className="form-group">
+              <label htmlFor="college">
+                College
+              </label>
+
+              <input
+                id="college"
+                name="college"
+                type="text"
+                value={formData.college}
+                onChange={handleChange}
+                placeholder="Enter your college"
+                required
+              />
+            </div>
+
+          </div>
+
+
+          {/* YEAR + DEPARTMENT */}
+
+          <div className="form-row">
+
+            <div className="form-group">
+              <label htmlFor="year">
+                Year
+              </label>
+
+              <select
+                id="year"
+                name="year"
+                value={formData.year}
+                onChange={handleChange}
+                required
+              >
+                <option value="">
+                  Select your year
+                </option>
+
+                <option value="1st Year">
+                  1st Year
+                </option>
+
+                <option value="2nd Year">
+                  2nd Year
+                </option>
+
+                <option value="3rd Year">
+                  3rd Year
+                </option>
+
+                <option value="4th Year">
+                  4th Year
+                </option>
+              </select>
+            </div>
+
+
+            <div className="form-group">
+              <label htmlFor="department">
+                Department
+              </label>
+
+              <input
+                id="department"
+                name="department"
+                type="text"
+                value={formData.department}
+                onChange={handleChange}
+                placeholder="Enter your department"
+                required
+              />
+            </div>
+
+          </div>
+
+
+          {/* EVENT + TEAM SIZE */}
+
+          <div className="form-row">
+
+            <div className="form-group">
               <label htmlFor="event">
-                Select Event
+                Event
               </label>
 
               <select
@@ -542,94 +414,87 @@ function Register() {
                 onChange={handleChange}
                 required
               >
-
                 <option value="">
                   Select an event
                 </option>
 
-                {events.map((event) => (
-                  <option
-                    key={event.id}
-                    value={event.title}
-                  >
-                    {event.title}
-                  </option>
-                ))}
+                <option value="EUREKA!">
+                  EUREKA!
+                </option>
 
+                <option value="Other">
+                  Other
+                </option>
               </select>
-
             </div>
 
-            {/* ====================================
-                TEAM SIZE
-            ==================================== */}
 
             <div className="form-group">
-
-              <label htmlFor="teamSize">
+              <label htmlFor="team_size">
                 Team Size
               </label>
 
-              <select
-                id="teamSize"
-                name="teamSize"
-                value={formData.teamSize}
+              <input
+                id="team_size"
+                name="team_size"
+                type="number"
+                min="1"
+                value={formData.team_size}
                 onChange={handleChange}
+                placeholder="Enter team size"
                 required
-              >
-
-                <option value="1">
-                  1 Member
-                </option>
-
-                <option value="2">
-                  2 Members
-                </option>
-
-                <option value="3">
-                  3 Members
-                </option>
-
-                <option value="4">
-                  4 Members
-                </option>
-
-              </select>
-
+              />
             </div>
 
-            {/* ====================================
-                SUBMIT
-            ==================================== */}
+          </div>
 
-            <div className="registration-submit">
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-              >
+          {/* POST YOUR IDEA */}
 
-                {isSubmitting
-                  ? "Submitting..."
-                  : "Submit Registration"}
+          <div className="form-group">
 
-                {!isSubmitting && (
-                  <span>
-                    →
-                  </span>
-                )}
+            <label htmlFor="idea">
+              Post Your Idea
+            </label>
 
-              </button>
+            <textarea
+              id="idea"
+              name="idea"
+              value={formData.idea}
+              onChange={handleChange}
+              placeholder="Briefly describe your idea..."
+              rows="6"
+              required
+            />
 
-            </div>
+          </div>
 
-          </form>
 
-        </section>
+          {/* SUBMIT */}
 
-      </main>
-    </>
+          <div className="registration-submit">
+
+            <button
+              type="submit"
+              disabled={submitting}
+            >
+              {submitting
+                ? "Submitting..."
+                : "Submit Registration"}
+
+              {!submitting && (
+                <span aria-hidden="true">
+                  →
+                </span>
+              )}
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </main>
   );
 }
-
-export default Register;
