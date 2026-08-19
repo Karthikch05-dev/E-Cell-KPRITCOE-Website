@@ -140,25 +140,11 @@ function Register() {
         return;
       }
 
-      console.log(
-        "Registration saved successfully."
-      );
-
-      console.log(
-        "Registration ID:",
-        insertedData.id
-      );
+      console.log("Registration saved successfully.");
+      console.log("Registration ID:", insertedData.id);
 
       // ==========================================
       // 2. SEND CONFIRMATION EMAIL
-      // ==========================================
-      //
-      // IMPORTANT:
-      // If the email function fails, we DO NOT
-      // consider the registration failed.
-      //
-      // Registration is already safely stored
-      // in Supabase.
       // ==========================================
 
       let emailSent = false;
@@ -205,12 +191,9 @@ function Register() {
           throw emailError;
         }
 
-        // We only consider the email successful
-        // when the Edge Function explicitly returns success.
         if (emailData?.success === true) {
           emailSent = true;
         }
-
       } catch (emailError) {
         console.error(
           "Confirmation email failed:",
@@ -221,7 +204,7 @@ function Register() {
       }
 
       // ==========================================
-      // 3. SHOW RESULT
+      // 3. SHOW SUCCESS NOTIFICATION
       // ==========================================
 
       if (emailSent) {
@@ -233,6 +216,10 @@ function Register() {
           "Your registration has been submitted successfully, but the confirmation email could not be sent right now."
         );
       }
+
+      // IMPORTANT:
+      // Show the notification
+      setShowSuccess(true);
 
       // ==========================================
       // 4. RESET FORM
@@ -250,7 +237,7 @@ function Register() {
       });
 
       // ==========================================
-      // 5. HIDE SUCCESS MESSAGE
+      // 5. AUTO HIDE SUCCESS NOTIFICATION
       // ==========================================
 
       setTimeout(() => {
@@ -266,7 +253,6 @@ function Register() {
       alert(
         "Something went wrong. Please try again."
       );
-
     } finally {
       setIsSubmitting(false);
     }
@@ -578,6 +564,7 @@ function Register() {
                 type="submit"
                 disabled={isSubmitting}
               >
+
                 {isSubmitting
                   ? "Submitting..."
                   : "Submit Registration"}
