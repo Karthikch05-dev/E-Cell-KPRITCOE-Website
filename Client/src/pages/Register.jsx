@@ -7,27 +7,6 @@ function Register() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  {/* EUREKA REGISTRATION NOTICE */}
-<div className="eureka-registration-notice">
-  <p>
-    <strong>Important:</strong> Before filling this form, you must first
-    register through the official EUREKA registration website using our NEC ID:
-  </p>
-
-  <p className="nec-id">
-    NEC ID: <strong>NEC2610645</strong>
-  </p>
-
-  <a
-    href="https://www.ecell.in/eureka/register"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="eureka-registration-btn"
-  >
-    EUREKA! Registration
-  </a>
-</div>
-
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -238,8 +217,6 @@ function Register() {
         );
       }
 
-      // IMPORTANT:
-      // Show the notification
       setShowSuccess(true);
 
       // ==========================================
@@ -349,6 +326,34 @@ function Register() {
             className="registration-form"
             onSubmit={handleSubmit}
           >
+
+            {/* ====================================
+                EUREKA REGISTRATION NOTICE
+            ==================================== */}
+
+            <div className="eureka-registration-notice">
+
+              <p>
+                <strong>Important:</strong> Before filling
+                this form, you need to first register through
+                the official EUREKA registration website using
+                our NEC ID:
+              </p>
+
+              <p className="nec-id">
+                NEC ID: <strong>NEC2610645</strong>
+              </p>
+
+              <a
+                href="https://www.ecell.in/eureka/register"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="eureka-registration-btn"
+              >
+                EUREKA! Registration
+              </a>
+
+            </div>
 
             {/* ====================================
                 FULL NAME + EMAIL
