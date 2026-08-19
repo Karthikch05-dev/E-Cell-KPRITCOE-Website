@@ -1338,6 +1338,7 @@ a {
 /* Form Container */
 
 .registration-container {
+  width: min(900px, 100%);
   max-width: 900px;
 
   margin: 0 auto;
@@ -1390,8 +1391,11 @@ a {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
+
+  box-sizing: border-box;
 
   padding: 13px 15px;
 
@@ -1416,8 +1420,20 @@ a {
   color: #9aa3b3;
 }
 
+.form-group textarea {
+  min-height: 150px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.form-group textarea::placeholder {
+  color: #9aa3b3;
+}
+
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   border-color: #274bb0;
 
   box-shadow:
@@ -1492,6 +1508,7 @@ a {
 
   .registration-container {
     padding: 25px 20px;
+    width: 100%;
   }
 
   .form-row {
@@ -2989,6 +3006,13 @@ css
   line-height: 1.7;
 }
 
+.eureka-registration-notice h3 {
+  margin: 0 0 12px;
+  color: #172b57;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
 .eureka-registration-notice p:last-of-type {
   margin-bottom: 18px;
 }
@@ -3000,7 +3024,7 @@ css
 
 /* NEC ID */
 
-.eureka-id {
+.eureka-nec-id {
   display: inline-block;
 
   margin-left: 5px;
@@ -3087,7 +3111,7 @@ css
     line-height: 1.65;
   }
 
-  .eureka-id {
+  .eureka-nec-id {
     margin-left: 0;
     margin-top: 5px;
   }

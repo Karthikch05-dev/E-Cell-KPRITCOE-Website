@@ -10,6 +10,8 @@ interface RegistrationBody {
   department: string;
   event: string;
   teamSize: number;
+  eurekaId: string;
+  ideaDescription: string;
   createdAt: string;
 }
 
@@ -40,11 +42,13 @@ serve(async (req: Request) => {
       department,
       event,
       teamSize,
+      eurekaId,
+      ideaDescription,
       createdAt,
     } = body;
 
     // Validate required fields
-    if (!registrationId || !name || !email || !event) {
+    if (!registrationId || !name || !email || !event || !eurekaId || !ideaDescription) {
       console.log("❌ Missing required fields");
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
@@ -85,6 +89,8 @@ serve(async (req: Request) => {
         department,
         event,
         teamSize,
+        eurekaId,
+        ideaDescription,
         createdAt,
       }),
     });
