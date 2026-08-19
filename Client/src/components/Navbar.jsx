@@ -12,6 +12,8 @@ function Navbar() {
           src="/images/kprit-logo.png"
           alt="KPRIT College of Engineering"
           className="brand-logo kprit-logo"
+          width="120"
+          height="45"
         />
 
         <span className="brand-divider"></span>
@@ -21,6 +23,8 @@ function Navbar() {
           src="/images/nec-logo.png"
           alt="National Entrepreneurship Challenge"
           className="brand-logo nec-logo"
+          width="120"
+          height="45"
         />
 
         <span className="brand-divider"></span>
@@ -30,6 +34,8 @@ function Navbar() {
           src="/images/ecell-logo.png"
           alt="E-Cell KPRIT-COE"
           className="brand-logo ecell-logo"
+          width="120"
+          height="45"
         />
 
       </Link>
