@@ -236,6 +236,10 @@ function Register() {
 
       setShowSuccess(true);
 
+      setTimeout(() => {
+  window.location.href = "https://www.ecell.in/eureka/register";
+}, 2000);
+
       // ==========================================
       // 4. RESET FORM
       // ==========================================
