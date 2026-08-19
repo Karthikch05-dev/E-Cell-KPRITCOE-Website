@@ -2959,4 +2959,93 @@ css
   .about-hero-logo img {
     max-width: 220px;
   }
+
+
+/* =========================================
+   EUREKA REGISTRATION NOTICE
+   ========================================= */
+
+.eureka-registration-notice {
+  margin-bottom: 28px;
+  padding: 20px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
 }
+
+.eureka-registration-notice p {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #d8d8d8;
+}
+
+.eureka-registration-notice strong {
+  color: #ffffff;
+}
+
+.eureka-id {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Eureka Registration button */
+
+.eureka-registration-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 11px 18px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #111111;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  text-decoration: none;
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.eureka-registration-button:hover {
+  transform: translateY(-2px);
+  background: #f0f0f0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.eureka-registration-button:active {
+  transform: translateY(0);
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .eureka-registration-notice {
+    padding: 17px;
+    margin-bottom: 22px;
+  }
+
+  .eureka-registration-notice p {
+    font-size: 14px;
+  }
+
+  .eureka-registration-button {
+    width: 100%;
+  }
+}}
