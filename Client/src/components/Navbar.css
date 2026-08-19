@@ -29,27 +29,9 @@
 }
 
 
-.kprit-logo {
+.brand-logo {
   width: 190px;
   height: 65px;
-  object-fit: contain;
-  display: block;
-}
-
-
-.nec-logo {
-  width: 190px;
-  height: 65px;
-
-  object-fit: contain;
-  display: block;
-}
-
-
-.ecell-logo {
-  width: 190px;
-  height: 65px;
-
   object-fit: contain;
   display: block;
 }
@@ -151,17 +133,7 @@
     gap: 10px;
   }
 
-  .kprit-logo {
-    width: 155px;
-    height: 55px;
-  }
-
-  .nec-logo {
-    width: 155px;
-    height: 55px;
-  }
-
-  .ecell-logo {
+  .brand-logo {
     width: 155px;
     height: 55px;
   }
@@ -192,18 +164,7 @@
     gap: 8px;
   }
 
-  .kprit-logo {
-    width: 135px;
-    height: 48px;
-
-  }
-
-  .nec-logo {
-    width: 135px;
-    height: 48px;
-  }
-
-  .ecell-logo {
+  .brand-logo {
     width: 135px;
     height: 48px;
   }
